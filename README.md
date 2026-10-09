@@ -44,3 +44,7 @@ claude --plugin-dir samples/ours/turn-receipt
 - `claude plugin validate` refuses a module that passes `$` to anything but a top-level function declared in the same file.
 - In `claude plugin test`, nothing sits beneath the plugin. A test must answer every event and `$` call the mod makes (`mock.clock`, `mock.store`, or its own `on('store.get', …)` returning `{ value }`). The kit refuses two hooks on the same event from the test.
 - Plugin names that look like Anthropic's (for example a `claude-` prefix) fail validation.
+
+## License
+
+MIT, see `LICENSE`. This covers what's in this repo, not the locally kept material listed above.
