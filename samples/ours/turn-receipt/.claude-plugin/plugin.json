@@ -1,0 +1,8 @@
+{
+  "name": "turn-receipt",
+  "version": "0.1.0",
+  "description": "AFTER the turn: prints a one-line receipt (time, tool calls, tokens) beneath each answer",
+  "author": {
+    "name": "Rob Gruhl"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "house-rules",
+  "version": "0.1.0",
+  "description": "BEFORE the turn: adds a system-prompt section, attaches the local time to each prompt, and registers /house-rules",
+  "author": {
+    "name": "Rob Gruhl"
+  }
+}

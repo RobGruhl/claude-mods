@@ -1,0 +1,514 @@
+<meta charset="utf-8">
+<title>Claude Mods Anatomy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" media="print" onload="this.media='all'">
+<style>
+/* Layout: one reading column of figures; each figure scrolls sideways inside itself on a phone. Phase hues are the one repeated encoding. */
+:root {
+  --bg: #F3F5F7; --panel: #FFFFFF; --ink: #17202A; --muted: #5A6673; --rule: #D5DCE3;
+  --load: #6B7785; --before: #2F6FB3; --during: #B7791F; --after: #7A4FB0; --durable: #2E8B57; --stop: #C0392B;
+  --chip: #EEF2F6;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #10151B; --panel: #161D25; --ink: #E6EBF0; --muted: #98A4B0; --rule: #2A3440;
+    --load: #95A1AE; --before: #6EA8E6; --during: #E3A64A; --after: #B293E3; --durable: #5CC28A; --stop: #EE7466; --chip: #1E2731; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #10151B; --panel: #161D25; --ink: #E6EBF0; --muted: #98A4B0; --rule: #2A3440;
+  --load: #95A1AE; --before: #6EA8E6; --during: #E3A64A; --after: #B293E3; --durable: #5CC28A; --stop: #EE7466; --chip: #1E2731; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--body); margin: 0; }
+.wrap { max-width: 72rem; margin: 0 auto; padding-inline: 20px; padding-block: 32px 64px; }
+header.top { display: grid; gap: 10px; max-width: 46rem; margin-bottom: 28px; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 700 clamp(2rem, 5vw, 3.1rem)/1.05 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 700 1.55rem/1.2 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 600 1.05rem/1.3 var(--body); margin: 0; }
+p { margin: 0; }
+.lede { font-size: 1.08rem; color: var(--muted); }
+code, .mono { font-family: var(--mono); font-size: .88em; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--muted); font-size: .9rem; }
+.meta b { color: var(--ink); font-weight: 600; }
+
+nav.toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 34px; }
+nav.toc a { font: 500 .85rem/1 var(--body); color: var(--ink); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 7px 12px; background: var(--panel); }
+nav.toc a:hover, nav.toc a:focus-visible { border-color: var(--ink); outline: none; }
+
+section.fig { display: grid; gap: 14px; padding-block: 34px; border-top: 1px solid var(--rule); }
+section.fig > header { display: grid; gap: 6px; max-width: 48rem; }
+.num { font: 600 12px/1 var(--mono); color: var(--muted); letter-spacing: .06em; }
+figure { margin: 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 14px; overflow-x: auto; }
+figure svg { display: block; width: 100%; height: auto; min-width: 760px; color: var(--ink); font-family: var(--mono); }
+figure.narrow svg { min-width: 560px; }
+figcaption { margin-top: 10px; font-size: .92rem; color: var(--muted); max-width: 60rem; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 12px 24px; }
+.notes > div { min-width: 0; display: grid; gap: 4px; }
+.notes p { font-size: .95rem; }
+.k { font: 600 .78rem/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+.k.load { color: var(--load); } .k.before { color: var(--before); } .k.during { color: var(--during); } .k.after { color: var(--after); } .k.durable { color: var(--durable); } .k.stop { color: var(--stop); }
+
+.tablewrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: .92rem; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--rule); }
+th { font: 600 .78rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+td code { white-space: nowrap; }
+.pill { display: inline-block; font: 600 .72rem/1 var(--mono); padding: 4px 7px; border-radius: 4px; color: var(--panel); }
+.pill.load { background: var(--load); } .pill.before { background: var(--before); } .pill.during { background: var(--during); } .pill.after { background: var(--after); } .pill.durable { background: var(--durable); }
+.callout { border-left: 3px solid var(--stop); padding: 4px 0 4px 14px; max-width: 48rem; }
+footer { border-top: 1px solid var(--rule); padding-top: 24px; color: var(--muted); font-size: .88rem; display: grid; gap: 8px; }
+footer a, .src a { color: var(--ink); }
+@media (max-width: 520px) { .wrap { padding-inline: 16px; } }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <span class="eyebrow">Claude Code 2.1.287+ · early access · checked against the 2.1.295 type declarations</span>
+  <h1>Claude Mods, drawn as machinery</h1>
+  <p class="lede">A mod is a TypeScript or JavaScript module that Claude Code loads into its own event chain. It can stop, rewrite or watch almost everything the engine does, from the prompt you type to the rows written to the transcript, and it can draw its own interface. These figures show where each piece sits and what lasts how long. New to all of this? Start with <a href="https://claude.ai/artifact/3mFYWj2F5qM7Sz7f7RpLG3" style="color: var(--before)">Claude Mods 101</a>.</p>
+  <div class="meta"><span><b>Released</b> 1 October 2026</span><span><b>Hook shape</b> <code>($, e, next)</code></span><span><b>Budget</b> 10 s per hook</span><span><b>Sandbox</b> none</span></div>
+</header>
+
+<nav class="toc" aria-label="Figures">
+  <a href="#anatomy">Anatomy</a><a href="#chain">The chain</a><a href="#lifecycle">Before, during, after</a><a href="#toolcall">A tool call</a><a href="#lifetimes">What lasts</a><a href="#surfaces">Where it draws</a><a href="#compare">Mods vs hooks, skills, MCP</a><a href="#control">Controls</a><a href="#samples">Samples</a>
+</nav>
+
+<!-- 1. ANATOMY -->
+<section class="fig" id="anatomy">
+  <header><span class="num">FIGURE 1</span><h2>Anatomy: three files, one door</h2>
+  <p>A mod is a plugin folder whose hooks module exports <code>register(on, options)</code>. The module runs in an environment of its own with no Node and no DOM, so everything it touches outside itself goes through <code>$</code>. That boundary is for isolation of code, not for safety: <code>$</code> can read and write files, run processes and fetch URLs with Claude Code's own rights.</p></header>
+  <figure>
+    <svg viewBox="0 0 1000 400" role="img" aria-label="A plugin folder with plugin.json, hooks.json and register.tsx is loaded by the engine into an isolated module environment; the module reaches the host only through the dollar interface, which fans out to files, processes, network, model, session, interface, state, store, clock, tools, agents and commands.">
+      <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+      <!-- folder -->
+      <rect x="20" y="40" width="250" height="300" rx="8" fill="none" stroke="currentColor" stroke-opacity=".35"/>
+      <text x="36" y="68" font-size="13" font-weight="600" fill="currentColor">my-mod/</text>
+      <text x="48" y="96" font-size="12" fill="currentColor">.claude-plugin/plugin.json</text>
+      <text x="64" y="114" font-size="11" fill="currentColor" fill-opacity=".6">name · version · userConfig · types</text>
+      <text x="48" y="146" font-size="12" fill="currentColor">hooks/hooks.json</text>
+      <text x="64" y="164" font-size="11" fill="currentColor" fill-opacity=".6">{ "modules": ["./register.tsx"] }</text>
+      <text x="48" y="196" font-size="12" fill="currentColor">hooks/register.tsx</text>
+      <text x="64" y="214" font-size="11" fill="currentColor" fill-opacity=".6">export const register</text>
+      <text x="48" y="246" font-size="12" fill="currentColor">types/index.d.ts</text>
+      <text x="64" y="264" font-size="11" fill="currentColor" fill-opacity=".6">PluginState contract (optional)</text>
+      <text x="48" y="296" font-size="12" fill="currentColor">tests/*.test.ts</text>
+      <text x="64" y="314" font-size="11" fill="currentColor" fill-opacity=".6">claude plugin test</text>
+      <line x1="270" y1="190" x2="330" y2="190" stroke="currentColor" marker-end="url(#a1)"/>
+      <text x="300" y="180" font-size="11" text-anchor="middle" fill="currentColor">loads</text>
+      <!-- engine -->
+      <rect x="335" y="40" width="330" height="300" rx="8" fill="var(--chip)" stroke="currentColor" stroke-opacity=".35"/>
+      <text x="351" y="68" font-size="13" font-weight="600" fill="currentColor">Claude Code engine</text>
+      <rect x="360" y="90" width="280" height="150" rx="6" fill="var(--panel)" stroke="var(--before)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <text x="376" y="114" font-size="12" font-weight="600" fill="var(--before)">module environment</text>
+      <text x="376" y="132" font-size="11" fill="currentColor" fill-opacity=".65">no Node · no DOM · web APIs only</text>
+      <text x="376" y="162" font-size="12" fill="currentColor">register(on, options)</text>
+      <text x="376" y="184" font-size="12" fill="currentColor">on('tool.call', {tool}, hook)</text>
+      <text x="376" y="206" font-size="12" fill="currentColor">hook = ($, e, next) =&gt; …</text>
+      <text x="376" y="228" font-size="11" fill="currentColor" fill-opacity=".65">module variables die at reload</text>
+      <rect x="600" y="266" width="44" height="44" rx="6" fill="var(--during)"/>
+      <text x="622" y="295" font-size="20" font-weight="600" text-anchor="middle" fill="var(--panel)">$</text>
+      <text x="376" y="285" font-size="11" fill="currentColor">the only way out of the module:</text>
+      <text x="376" y="303" font-size="11" fill="currentColor">frozen, noun.method(), extendable</text>
+      <line x1="622" y1="240" x2="622" y2="264" stroke="currentColor" marker-end="url(#a1)"/>
+      <line x1="646" y1="288" x2="700" y2="288" stroke="currentColor" marker-end="url(#a1)"/>
+      <!-- host -->
+      <text x="712" y="64" font-size="13" font-weight="600" fill="currentColor">what $ reaches</text>
+      <g font-size="12" fill="currentColor">
+        <text x="712" y="94">$.fs</text><text x="800" y="94" fill-opacity=".65">read · write · stat</text>
+        <text x="712" y="116">$.process</text><text x="800" y="116" fill-opacity=".65">run · spawn argv</text>
+        <text x="712" y="138">$.http</text><text x="800" y="138" fill-opacity=".65">fetch</text>
+        <text x="712" y="160">$.model</text><text x="800" y="160" fill-opacity=".65">complete · fork</text>
+        <text x="712" y="182">$.session</text><text x="800" y="182" fill-opacity=".65">messages · usage · append</text>
+        <text x="712" y="204">$.ui</text><text x="800" y="204" fill-opacity=".65">render · toast · status · pane</text>
+        <text x="712" y="226">$.state</text><text x="800" y="226" fill-opacity=".65">session values</text>
+        <text x="712" y="248">$.store</text><text x="800" y="248" fill-opacity=".65">JSON across sessions</text>
+        <text x="712" y="270">$.clock</text><text x="800" y="270" fill-opacity=".65">now · after · every</text>
+        <text x="712" y="292">$.tool · agent</text><text x="800" y="292" fill-opacity=".65">register for the model</text>
+        <text x="712" y="314">$.command</text><text x="800" y="314" fill-opacity=".65">slash commands</text>
+        <text x="712" y="336">$.audio · mcp · env</text><text x="840" y="336" fill-opacity=".65">and more</text>
+      </g>
+      <text x="712" y="372" font-size="11" fill="var(--stop)">same rights as Claude Code itself</text>
+    </svg>
+    <figcaption>The folder is the unit of install. Only <code>plugin.json</code>, <code>hooks.json</code> and the module are required. A plugin can also add its own noun to <code>$</code> in <code>engine.create</code>, which other plugins then declare as a dependency.</figcaption>
+  </figure>
+</section>
+
+<!-- 2. THE CHAIN -->
+<section class="fig" id="chain">
+  <header><span class="num">FIGURE 2</span><h2>The chain: every event is an onion</h2>
+  <p>When the engine raises an event, the hooks registered for it nest in tier order. Each hook gets the event <code>e</code> and a <code>next</code>. Calling <code>next(e)</code> runs everything beneath and resolves to the result, which the hook can return, change, or ignore. Earlier tiers wrap later ones, so an organization's managed plugins see everything first and have the last word.</p></header>
+  <figure>
+    <svg viewBox="0 0 1000 430" role="img" aria-label="An event descends through managed settings hooks, the prepend tier, the user tier, the append tier, the builtin tier and core, and its result climbs back up the same layers. A hook can answer without calling next, rewrite the event on the way down, or change the result on the way up.">
+      <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+      <g font-size="12" fill="currentColor">
+        <rect x="160" y="30"  width="560" height="370" rx="10" fill="none" stroke="currentColor" stroke-opacity=".3"/>
+        <text x="176" y="52" font-weight="600">managed settings hooks</text><text x="704" y="52" text-anchor="end" fill-opacity=".6">tool.call: their deny is final</text>
+        <rect x="185" y="66"  width="510" height="322" rx="9" fill="none" stroke="var(--stop)" stroke-opacity=".8"/>
+        <text x="201" y="88" font-weight="600" fill="var(--stop)">prepend</text><text x="679" y="88" text-anchor="end" fill-opacity=".6">prependPlugins · built-in guard sec-default</text>
+        <rect x="210" y="102" width="460" height="274" rx="8" fill="none" stroke="var(--before)"/>
+        <text x="226" y="124" font-weight="600" fill="var(--before)">user</text><text x="654" y="124" text-anchor="end" fill-opacity=".6">everything you install, in list order</text>
+        <rect x="235" y="138" width="410" height="226" rx="7" fill="none" stroke="var(--after)"/>
+        <text x="251" y="160" font-weight="600" fill="var(--after)">append</text><text x="629" y="160" text-anchor="end" fill-opacity=".6">appendPlugins, in listed order</text>
+        <rect x="260" y="174" width="360" height="178" rx="6" fill="none" stroke="var(--load)"/>
+        <text x="276" y="196" font-weight="600" fill="var(--load)">builtin</text><text x="604" y="196" text-anchor="end" fill-opacity=".6">diff, agents-md, telemetry…</text>
+        <rect x="285" y="210" width="310" height="130" rx="6" fill="var(--chip)" stroke="currentColor" stroke-opacity=".5"/>
+        <text x="301" y="234" font-weight="600">core</text>
+        <text x="301" y="256" fill-opacity=".75">the engine's own behaviour:</text>
+        <text x="301" y="276" fill-opacity=".75">permission prompt, the tool itself,</text>
+        <text x="301" y="296" fill-opacity=".75">unmanaged settings hooks (classic)</text>
+        <text x="301" y="324" fill-opacity=".6">beneath core: nothing</text>
+      </g>
+      <!-- down / up arrows -->
+      <line x1="120" y1="40" x2="120" y2="380" stroke="currentColor" marker-end="url(#a2)"/>
+      <text x="108" y="210" font-size="12" text-anchor="end" fill="currentColor">e</text>
+      <text x="108" y="228" font-size="11" text-anchor="end" fill="currentColor" fill-opacity=".65">next(e)</text>
+      <text x="108" y="244" font-size="11" text-anchor="end" fill="currentColor" fill-opacity=".65">going down</text>
+      <line x1="760" y1="380" x2="760" y2="40" stroke="currentColor" marker-end="url(#a2)"/>
+      <text x="760" y="404" font-size="12" text-anchor="middle" fill="currentColor">result, coming up</text>
+      <!-- three moves -->
+      <g font-size="12" fill="currentColor">
+        <text x="830" y="80" font-weight="600" fill="var(--stop)">answer</text>
+        <text x="830" y="98" fill-opacity=".7">return without next:</text>
+        <text x="830" y="114" fill-opacity=".7">nothing beneath runs</text>
+        <text x="830" y="160" font-weight="600" fill="var(--before)">rewrite</text>
+        <text x="830" y="178" fill-opacity=".7">next({ ...e, x })</text>
+        <text x="830" y="194" fill-opacity=".7">the rest sees x</text>
+        <text x="830" y="240" font-weight="600" fill="var(--after)">wrap</text>
+        <text x="830" y="258" fill-opacity=".7">const r = await next(e)</text>
+        <text x="830" y="274" fill-opacity=".7">act on r, return it</text>
+        <text x="830" y="320" font-weight="600" fill="var(--load)">fail</text>
+        <text x="830" y="338" fill-opacity=".7">throw or pass 10 s:</text>
+        <text x="830" y="354" fill-opacity=".7">hook skipped</text>
+      </g>
+    </svg>
+    <figcaption>Tiers, outermost first: <code>prepend</code>, <code>user</code>, <code>append</code>, <code>builtin</code>, <code>core</code>. A failing hook is skipped and the chain continues, so a guard written as a mod <em>fails open</em> unless its registration adds a <code>.catch</code> handler (1 s of grace) that answers in its place. An admin who wants a guard that cannot be skipped puts it in managed settings or the prepend tier, and can refuse other modules outright at <code>plugin.register</code>. The built-in guard <code>sec-default</code> loads ahead of every user mod on any machine with managed settings or a Team or Enterprise sign-in.</figcaption>
+  </figure>
+  <div class="notes">
+    <div><span class="k stop">Budget</span><p>10,000 ms of a hook's own time per dispatch. Time spent waiting on <code>next</code> or on <code>$</code> calls doesn't count, except <code>$.clock</code> sleeps. <code>session.end</code> shares one short wall-clock bound across the whole chain so exit stays fast.</p></div>
+    <div><span class="k before">Pinned fields</span><p>Some fields can't be rewritten: a tool call's identity, a spawn's provider, an appended row's role and type. A rewrite of a pinned field fails the hook, which is then skipped.</p></div>
+    <div><span class="k load">One worker</span><p>Installed mods share one worker thread. A mod that crashes it or blocks it with a loop that never awaits is unloaded by name. After three crashes it can't trace, every mod that isn't built in is turned off for the session, including the organization's.</p></div>
+    <div><span class="k during">Streams</span><p><code>turn.step</code> (a model request) and <code>process.spawn</code> (a child's output) stream. Hooks on them are async generators that can forward, rewrite or replace chunks.</p></div>
+  </div>
+</section>
+
+<!-- 3. LIFECYCLE -->
+<section class="fig" id="lifecycle">
+  <header><span class="num">FIGURE 3</span><h2>Before, during, after: where each event fires</h2>
+  <p>The 2.1.295 declarations list 46 engine events. Here they are placed on one session's timeline. The marking says what a hook there can do: stop the thing from happening, change it, or only watch.</p></header>
+  <figure>
+    <svg viewBox="0 0 1140 668" role="img" aria-label="Timeline of a session in five columns. Load: plugin.register, engine.create, ui.resolve, session.start. Before the turn: prompt.edit, prompt.fill, prompt.suggest, prompt.autocomplete, prompt.submit, prompt.mention, command.run, skill.prompt, prompt.compose, prompt.section, prompt.context, prompt.attachment, tool.describe. During: turn.start, turn.step, tool.call, tool.check, agent.offer, agent.spawn, process.spawn, session.append, session.receive, session.send, attribution.text, ui.render and the ui input events, ui.fault, telemetry. After: turn.complete, session.measure, session.compact, session.end, session.detach. Durably: the store, state and transcript bars run underneath.">
+      <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+      <!-- phase headers -->
+      <g font-size="13" font-weight="600">
+        <rect x="20" y="16" width="190" height="30" rx="5" fill="var(--load)"/><text x="115" y="36" text-anchor="middle" fill="var(--panel)">LOAD · once</text>
+        <rect x="225" y="16" width="230" height="30" rx="5" fill="var(--before)"/><text x="340" y="36" text-anchor="middle" fill="var(--panel)">BEFORE the turn</text>
+        <rect x="470" y="16" width="420" height="30" rx="5" fill="var(--during)"/><text x="680" y="36" text-anchor="middle" fill="var(--panel)">DURING the turn</text>
+        <rect x="905" y="16" width="215" height="30" rx="5" fill="var(--after)"/><text x="1012" y="36" text-anchor="middle" fill="var(--panel)">AFTER</text>
+      </g>
+      <line x1="20" y1="60" x2="1116" y2="60" stroke="currentColor" stroke-opacity=".5" marker-end="url(#a3)"/>
+      <text x="1116" y="76" font-size="11" text-anchor="end" fill="currentColor" fill-opacity=".6">time</text>
+      <!-- chip helper: stop = filled red-outline, rewrite = solid outline, observe = dashed -->
+      <g font-size="12" fill="currentColor">
+        <!-- LOAD -->
+        <rect x="20" y="86" width="190" height="26" rx="4" fill="var(--chip)" stroke="var(--stop)" stroke-width="2"/><text x="30" y="103">plugin.register</text>
+        <rect x="20" y="120" width="190" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="30" y="137">engine.create</text>
+        <rect x="20" y="154" width="190" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="30" y="171">ui.resolve</text>
+        <rect x="20" y="188" width="190" height="26" rx="4" fill="var(--chip)" stroke="currentColor" stroke-dasharray="4 3"/><text x="30" y="205">session.start</text>
+        <text x="20" y="236" font-size="11" fill-opacity=".65">admit or refuse a module;</text>
+        <text x="20" y="251" font-size="11" fill-opacity=".65">add nouns to $; register</text>
+        <text x="20" y="266" font-size="11" fill-opacity=".65">tools, commands, timers</text>
+        <!-- BEFORE -->
+        <rect x="225" y="86" width="230" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="235" y="103">prompt.edit · fill · suggest</text>
+        <rect x="225" y="120" width="230" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="235" y="137">prompt.autocomplete</text>
+        <rect x="225" y="154" width="230" height="26" rx="4" fill="var(--chip)" stroke="var(--stop)" stroke-width="2"/><text x="235" y="171">prompt.submit</text>
+        <rect x="225" y="188" width="230" height="26" rx="4" fill="var(--chip)" stroke="var(--stop)" stroke-width="2"/><text x="235" y="205">prompt.mention</text>
+        <rect x="225" y="222" width="230" height="26" rx="4" fill="var(--chip)" stroke="var(--stop)" stroke-width="2"/><text x="235" y="239">command.run</text>
+        <rect x="225" y="256" width="230" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="235" y="273">skill.prompt</text>
+        <text x="225" y="304" font-size="11" fill-opacity=".65">what the model will read:</text>
+        <rect x="225" y="314" width="230" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="235" y="331">prompt.compose</text>
+        <rect x="225" y="348" width="230" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="235" y="365">prompt.section</text>
+        <rect x="225" y="382" width="230" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="235" y="399">prompt.context</text>
+        <rect x="225" y="416" width="230" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="235" y="433">prompt.attachment</text>
+        <rect x="225" y="450" width="230" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="235" y="467">tool.describe</text>
+        <text x="225" y="496" font-size="11" fill-opacity=".65">cached: an unstable answer</text>
+        <text x="225" y="511" font-size="11" fill-opacity=".65">spends the prompt cache</text>
+        <!-- DURING col A -->
+        <rect x="470" y="86" width="200" height="26" rx="4" fill="var(--chip)" stroke="currentColor" stroke-dasharray="4 3"/><text x="480" y="103">turn.start</text>
+        <rect x="470" y="120" width="200" height="26" rx="4" fill="var(--chip)" stroke="var(--stop)" stroke-width="2"/><text x="480" y="137">turn.step  ⇶ stream</text>
+        <rect x="470" y="154" width="200" height="26" rx="4" fill="var(--chip)" stroke="var(--stop)" stroke-width="2"/><text x="480" y="171">tool.call</text>
+        <rect x="470" y="188" width="200" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="480" y="205">tool.check</text>
+        <rect x="470" y="222" width="200" height="26" rx="4" fill="var(--chip)" stroke="var(--stop)" stroke-width="2"/><text x="480" y="239">agent.offer</text>
+        <rect x="470" y="256" width="200" height="26" rx="4" fill="var(--chip)" stroke="var(--stop)" stroke-width="2"/><text x="480" y="273">agent.spawn</text>
+        <rect x="470" y="290" width="200" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="480" y="307">process.spawn  ⇶ stream</text>
+        <rect x="470" y="324" width="200" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="480" y="341">attribution.text</text>
+        <!-- DURING col B -->
+        <rect x="690" y="86" width="200" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="700" y="103">session.append</text>
+        <rect x="690" y="120" width="200" height="26" rx="4" fill="var(--chip)" stroke="var(--stop)" stroke-width="2"/><text x="700" y="137">session.receive</text>
+        <rect x="690" y="154" width="200" height="26" rx="4" fill="var(--chip)" stroke="var(--stop)" stroke-width="2"/><text x="700" y="171">session.send</text>
+        <rect x="690" y="188" width="200" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="700" y="205">ui.render</text>
+        <rect x="690" y="222" width="200" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="700" y="239">ui.press · input · select</text>
+        <rect x="690" y="256" width="200" height="26" rx="4" fill="var(--chip)" stroke="var(--stop)" stroke-width="2"/><text x="700" y="273">ui.focus · scroll</text>
+        <rect x="690" y="290" width="200" height="26" rx="4" fill="var(--chip)" stroke="var(--stop)" stroke-width="2"/><text x="700" y="307">config.set</text>
+        <rect x="690" y="324" width="200" height="26" rx="4" fill="var(--chip)" stroke="var(--stop)" stroke-width="2"/><text x="700" y="341">telemetry.log · mark</text>
+        <rect x="690" y="358" width="200" height="26" rx="4" fill="var(--chip)" stroke="currentColor" stroke-dasharray="4 3"/><text x="700" y="375">ui.fault</text>
+        <text x="470" y="406" font-size="11" fill-opacity=".65">subagents run the same chain; e.agentId names the loop</text>
+        <text x="470" y="422" font-size="11" fill-opacity=".65">ui.* fire whenever something draws, not only mid-turn</text>
+        <!-- AFTER -->
+        <rect x="905" y="86" width="215" height="26" rx="4" fill="var(--chip)" stroke="currentColor"/><text x="915" y="103">turn.complete</text>
+        <rect x="905" y="120" width="215" height="26" rx="4" fill="var(--chip)" stroke="currentColor" stroke-dasharray="4 3"/><text x="915" y="137">session.measure</text>
+        <rect x="905" y="154" width="215" height="26" rx="4" fill="var(--chip)" stroke="var(--stop)" stroke-width="2"/><text x="915" y="171">session.compact</text>
+        <rect x="905" y="188" width="215" height="26" rx="4" fill="var(--chip)" stroke="currentColor" stroke-dasharray="4 3"/><text x="915" y="205">session.end</text>
+        <rect x="905" y="222" width="215" height="26" rx="4" fill="var(--chip)" stroke="currentColor" stroke-dasharray="4 3"/><text x="915" y="239">session.attach · detach</text>
+        <text x="905" y="270" font-size="11" fill-opacity=".65">a line beneath the answer; usage</text>
+        <text x="905" y="285" font-size="11" fill-opacity=".65">pushed after each turn; skip or</text>
+        <text x="905" y="300" font-size="11" fill-opacity=".65">rewrite a compaction; save on exit</text>
+        <text x="905" y="315" font-size="11" fill-opacity=".65">within next.budget</text>
+        <!-- loop arrow -->
+        <text x="905" y="345" font-size="11" font-weight="600" fill="var(--before)">↺ next prompt: back to BEFORE</text>
+      </g>
+      <!-- DURABLY -->
+      <rect x="20" y="538" width="1100" height="116" rx="8" fill="none" stroke="var(--durable)" stroke-opacity=".6"/>
+      <text x="36" y="560" font-size="13" font-weight="600" fill="var(--durable)">DURABLY, under every phase</text>
+      <g font-size="12" fill="currentColor">
+        <rect x="36" y="572" width="1068" height="18" rx="3" fill="var(--durable)" fill-opacity=".14"/><text x="46" y="585">$.store · this plugin's JSON file under ~/.claude/plugins/store/ · outlives reloads and sessions</text>
+        <rect x="36" y="598" width="1068" height="18" rx="3" fill="var(--durable)" fill-opacity=".09"/><text x="46" y="611">transcript rows · session.append rewrites are what is stored, sent and resumed</text>
+        <rect x="36" y="624" width="1068" height="18" rx="3" fill="var(--before)" fill-opacity=".09"/><text x="46" y="637">$.state · versioned session values; readers redraw on write; survive a hot reload; reset by /clear, /resume, /branch</text>
+      </g>
+      <!-- legend -->
+      <g font-size="11" fill="currentColor">
+        <rect x="470" y="464" width="22" height="14" rx="3" fill="var(--chip)" stroke="var(--stop)" stroke-width="2"/><text x="498" y="475">can stop it</text>
+        <rect x="590" y="464" width="22" height="14" rx="3" fill="var(--chip)" stroke="currentColor"/><text x="618" y="475">can change it</text>
+        <rect x="720" y="464" width="22" height="14" rx="3" fill="var(--chip)" stroke="currentColor" stroke-dasharray="4 3"/><text x="748" y="475">watch only</text>
+      </g>
+    </svg>
+    <figcaption>"Can stop it" means a hook can deny, drop, consume, skip or answer in place: <code>{ deny }</code> on a tool call, a spawn or an <code>@</code>-mentioned file, <code>{ drop }</code> on a prompt, <code>{ consumed }</code> on a delivery, <code>{ skip }</code> on a compaction, <code>{ isOffered: false }</code> on an agent type, or an answer without <code>next</code> on a model request. Classic settings-hook events are also hookable as <code>classic.&lt;Event&gt;</code>, for example <code>classic.Stop</code>.</figcaption>
+  </figure>
+  <div class="notes">
+    <div><span class="k load">Load</span><p><code>session.start</code> is awaited before the first prompt, so a tool registered there is listed by turn one. Long-running work starts here with <code>$.clock.every</code>, which runs until cancelled or until the module reloads.</p></div>
+    <div><span class="k before">Before</span><p><code>prompt.submit</code> can rewrite the text you see, attach hidden <code>context</code>, or drop the prompt. <code>prompt.compose</code> adds or replaces whole system-prompt sections, scoped <code>shared</code> (cacheable) or <code>session</code>.</p></div>
+    <div><span class="k during">During</span><p><code>turn.step</code> can switch the model or effort for one request. <code>session.append</code> sees every row before it is stored, which is how a redactor keeps secrets out of the transcript file and the next request.</p></div>
+    <div><span class="k after">After</span><p><code>turn.complete</code> returns a different text to show it beneath the answer without rewriting the record. <code>session.measure</code> pushes usage, so a mod never polls for it.</p></div>
+  </div>
+</section>
+
+<!-- 4. TOOL CALL -->
+<section class="fig" id="toolcall">
+  <header><span class="num">FIGURE 4</span><h2>One tool call, end to end</h2>
+  <p>The busiest path a mod sits on. Three exits leave the normal path early, and the result passes back up through the same hooks that saw the call go down.</p></header>
+  <figure>
+    <svg viewBox="0 0 1100 330" role="img" aria-label="The model asks for a tool. The tool.call chain runs, then the classic PreToolUse hooks, then tool.check, which settles rules, mode and the tool's own check. Then the permission prompt and the tool itself. The result climbs back through the tool.call hooks, is stored by session.append, and goes into the next model request. A hook can deny, answer with its own result, or rewrite the input.">
+      <defs><marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+      <g font-size="12" fill="currentColor">
+        <rect x="16" y="60" width="120" height="56" rx="6" fill="var(--chip)" stroke="currentColor"/><text x="76" y="84" text-anchor="middle" font-weight="600">model</text><text x="76" y="102" text-anchor="middle" fill-opacity=".65">tool_use</text>
+        <rect x="172" y="60" width="150" height="56" rx="6" fill="var(--chip)" stroke="var(--during)" stroke-width="2"/><text x="247" y="84" text-anchor="middle" font-weight="600">tool.call</text><text x="247" y="102" text-anchor="middle" fill-opacity=".65">managed, then mods</text>
+        <rect x="358" y="60" width="150" height="56" rx="6" fill="var(--chip)" stroke="currentColor"/><text x="433" y="84" text-anchor="middle" font-weight="600">PreToolUse</text><text x="433" y="102" text-anchor="middle" fill-opacity=".65">classic settings hooks</text>
+        <rect x="544" y="60" width="150" height="56" rx="6" fill="var(--chip)" stroke="var(--during)" stroke-width="2"/><text x="619" y="84" text-anchor="middle" font-weight="600">tool.check</text><text x="619" y="102" text-anchor="middle" fill-opacity=".65">rules · mode · tool</text>
+        <rect x="730" y="60" width="150" height="56" rx="6" fill="var(--chip)" stroke="currentColor"/><text x="805" y="84" text-anchor="middle" font-weight="600">permission</text><text x="805" y="102" text-anchor="middle" fill-opacity=".65">mods can't draw this</text>
+        <rect x="916" y="60" width="160" height="56" rx="6" fill="var(--ink)"/><text x="996" y="84" text-anchor="middle" font-weight="600" fill="var(--panel)">the tool runs</text><text x="996" y="102" text-anchor="middle" fill="var(--panel)" fill-opacity=".75">Bash, Edit, MCP…</text>
+        <line x1="136" y1="80" x2="170" y2="80" stroke="currentColor" marker-end="url(#a4)"/>
+        <line x1="322" y1="80" x2="356" y2="80" stroke="currentColor" marker-end="url(#a4)"/>
+        <line x1="508" y1="80" x2="542" y2="80" stroke="currentColor" marker-end="url(#a4)"/>
+        <line x1="694" y1="80" x2="728" y2="80" stroke="currentColor" marker-end="url(#a4)"/>
+        <line x1="880" y1="80" x2="914" y2="80" stroke="currentColor" marker-end="url(#a4)"/>
+        <!-- result path -->
+        <path d="M996 116 V200 H247 V118" fill="none" stroke="var(--after)" stroke-width="1.5" marker-end="url(#a4)"/>
+        <text x="620" y="192" text-anchor="middle" fill="var(--after)">result climbs back: wrap hooks see isError, output, can add context</text>
+        <path d="M247 200 V250 H76 V118" fill="none" stroke="var(--durable)" stroke-width="1.5" marker-end="url(#a4)"/>
+        <rect x="120" y="236" width="230" height="28" rx="4" fill="var(--panel)" stroke="var(--durable)"/><text x="235" y="255" text-anchor="middle" fill="var(--durable)">session.append (door tool-result)</text>
+        <text x="76" y="290" text-anchor="middle" fill-opacity=".65">next request</text>
+        <text x="76" y="306" text-anchor="middle" fill-opacity=".65">(turn.step)</text>
+        <!-- exits -->
+        <line x1="247" y1="60" x2="247" y2="30" stroke="var(--stop)" stroke-dasharray="4 3"/>
+        <text x="247" y="22" text-anchor="middle" fill="var(--stop)">{ deny } · { result }</text>
+        <line x1="619" y1="60" x2="619" y2="30" stroke="var(--stop)" stroke-dasharray="4 3"/>
+        <text x="619" y="22" text-anchor="middle" fill="var(--stop)">{ decision: allow | deny | ask }</text>
+        <text x="433" y="140" text-anchor="middle" fill-opacity=".65">a deny here ends the call</text>
+        <text x="247" y="140" text-anchor="middle" fill-opacity=".65">next({ ...e, command })</text>
+        <text x="247" y="156" text-anchor="middle" fill-opacity=".65">rewrites the input</text>
+      </g>
+    </svg>
+    <figcaption><code>tool.call</code> is the gate and <code>tool.check</code> is the verdict. A hook that returns <code>{ result }</code> answers the call itself and the tool never runs. That's also how a plugin serves a tool it registered with <code>$.tool.register</code>, listed to the model as <code>mcp__&lt;plugin&gt;__&lt;name&gt;</code>. <code>$.tool.check</code> asks for a verdict without running anything. Where the built-in guard loads, a user's mod can't approve a call that a <code>deny</code> rule refuses, and a block from a managed <code>PreToolUse</code> hook is final. Neither rule covers a mod's own <code>$.fs</code> and <code>$.process</code> calls.</figcaption>
+  </figure>
+</section>
+
+<!-- 5. LIFETIMES -->
+<section class="fig" id="lifetimes">
+  <header><span class="num">FIGURE 5</span><h2>What lasts how long</h2>
+  <p>A mod has five places to keep something, and they end at different moments. A hot reload runs <code>register</code> again in a fresh environment and fires <code>session.start</code> again: module variables and timers are gone, while the host's values stay. <code>/clear</code>, <code>/resume</code> and <code>/branch</code> are the trap: they put every <code>$.state</code> value back to its default without firing <code>session.start</code>.</p></header>
+  <figure>
+    <svg viewBox="0 0 1000 360" role="img" aria-label="Across a session with two hot reloads, a /clear, an exit and a next session: module variables reset at every reload; dollar state lasts until /clear or exit; the transcript of the cleared conversation ends at /clear and can be resumed; dollar store and plugin options carry into the next session.">
+      <g font-size="12" fill="currentColor">
+        <line x1="250" y1="40" x2="250" y2="300" stroke="currentColor" stroke-opacity=".25"/>
+        <line x1="380" y1="40" x2="380" y2="300" stroke="var(--stop)" stroke-width="2" stroke-opacity=".7"/>
+        <line x1="500" y1="40" x2="500" y2="300" stroke="currentColor" stroke-opacity=".25"/>
+        <line x1="620" y1="40" x2="620" y2="300" stroke="currentColor" stroke-width="2" stroke-opacity=".6"/>
+        <line x1="720" y1="40" x2="720" y2="300" stroke="currentColor" stroke-opacity=".25"/>
+        <text x="170" y="30" text-anchor="middle" fill-opacity=".7">start</text>
+        <text x="250" y="30" text-anchor="middle" fill-opacity=".7">reload</text>
+        <text x="380" y="30" text-anchor="middle" font-weight="600" fill="var(--stop)">/clear</text>
+        <text x="500" y="30" text-anchor="middle" fill-opacity=".7">reload</text>
+        <text x="620" y="30" text-anchor="middle" font-weight="600">exit</text>
+        <text x="720" y="30" text-anchor="middle" fill-opacity=".7">next session</text>
+        <text x="16" y="74" font-weight="600">module variables</text>
+        <rect x="170" y="62" width="78" height="18" rx="3" fill="var(--load)"/><rect x="252" y="62" width="246" height="18" rx="3" fill="var(--load)"/><rect x="502" y="62" width="116" height="18" rx="3" fill="var(--load)"/>
+        <rect x="722" y="62" width="260" height="18" rx="3" fill="var(--load)" fill-opacity=".35"/><text x="732" y="75" fill="var(--panel)">fresh</text>
+        <text x="16" y="124" font-weight="600">$.state</text>
+        <rect x="170" y="112" width="208" height="18" rx="3" fill="var(--before)"/><rect x="382" y="112" width="236" height="18" rx="3" fill="var(--before)" fill-opacity=".55"/>
+        <text x="392" y="125" fill="var(--panel)">back to defaults</text>
+        <rect x="722" y="112" width="260" height="18" rx="3" fill="var(--before)" fill-opacity=".35"/><text x="732" y="125" fill="var(--panel)">defaults</text>
+        <text x="16" y="174" font-weight="600">transcript</text>
+        <rect x="170" y="162" width="208" height="18" rx="3" fill="var(--during)"/><rect x="382" y="162" width="236" height="18" rx="3" fill="var(--during)"/>
+        <rect x="722" y="162" width="260" height="18" rx="3" fill="var(--during)" fill-opacity=".55"/><text x="732" y="175" fill="var(--panel)">only on --resume</text>
+        <text x="16" y="224" font-weight="600">$.store</text>
+        <rect x="170" y="212" width="812" height="18" rx="3" fill="var(--durable)"/>
+        <text x="180" y="225" fill="var(--panel)">~/.claude/plugins/store/ · one JSON file per plugin, shared by every session</text>
+        <text x="16" y="274" font-weight="600">plugin options</text>
+        <rect x="170" y="262" width="812" height="18" rx="3" fill="var(--after)"/>
+        <text x="180" y="275" fill="var(--panel)">settings · pluginConfigs · a change reloads the module</text>
+        <text x="380" y="322" text-anchor="middle" fill="var(--stop)">session.start does not fire here;</text>
+        <text x="380" y="338" text-anchor="middle" fill="var(--stop)">classic.SessionStart does (source: clear)</text>
+      </g>
+    </svg>
+    <figcaption>The safe pattern: treat <code>$.store</code> as the source of truth, write it from what it holds rather than from <code>$.state</code>, and copy it back into <code>$.state</code> in a <code>classic.SessionStart</code> hook. Otherwise the first write after a <code>/clear</code> saves a default over the stored value. The <code>ledger</code> sample had exactly this bug until the docs pointed it out. Draw from <code>$.state</code>, not from module variables, because a reload loses the latter. A render hook that reads a <code>$.state</code> value is subscribed to it, and a write redraws exactly those readers. Write <code>$.store</code> too for anything that should still be there next session. Changing a <code>userConfig</code> option in <code>/config</code> reloads the module with the new <code>options</code>.</figcaption>
+  </figure>
+  <div class="notes">
+    <div><span class="k durable">$.store</span><p>The plugin's own key-value store of JSON data, one file under <code>~/.claude/plugins/store/</code>, shared by every session on the machine. It lasts until the mod deletes it or nothing touches it for <code>cleanupPeriodDays</code>. <code>$.fs.write</code> isn't atomic, so data several sessions change belongs here.</p></div>
+    <div><span class="k before">$.state</span><p>Named, versioned values the host holds for the session, declared in a <code>PluginState</code> contract. Only the owner writes; <code>update($, atom, fn)</code> retries on a version miss so two quick presses both land.</p></div>
+    <div><span class="k during">Transcript</span><p>Whatever <code>session.append</code>'s chain answers is what gets stored, sent to the model and read back on <code>--resume</code>. A mod can also append its own rows with <code>$.session.append</code>, labelled with its name.</p></div>
+  </div>
+</section>
+
+<!-- 6. SURFACES -->
+<section class="fig" id="surfaces">
+  <header><span class="num">FIGURE 6</span><h2>Where a mod can draw</h2>
+  <p>Drawing is an event like any other. A <code>ui.render</code> hook gets one component instance, can return its own tree built from the surface's element table, and can pass the rest through with <code>next(e)</code>. Hooks run everywhere Claude Code runs, but drawing shows up in two places today: the terminal (including editor terminals and JetBrains) and the Code tab of the Desktop app. The VS Code chat panel, <code>claude -p</code>, the Agent SDK and cloud sessions run the hooks and draw nothing, and Remote Control draws in the terminal on your machine.</p></header>
+  <figure class="narrow">
+    <svg viewBox="0 0 900 400" role="img" aria-label="A schematic of the fullscreen terminal: transcript rows with UserMessage, tool rows and CommandOutput sites; a spinner; the AbovePrompt band; the prompt box; the status line; a Pane docked on the right; and a toast.">
+      <g font-size="12" fill="currentColor">
+        <rect x="16" y="16" width="600" height="368" rx="8" fill="var(--chip)" stroke="currentColor" stroke-opacity=".5"/>
+        <rect x="32" y="34" width="568" height="30" rx="4" fill="var(--panel)" stroke="currentColor" stroke-opacity=".3"/><text x="44" y="54">UserMessage</text><text x="588" y="54" text-anchor="end" fill-opacity=".6">your prompt, a task notice, a peer's message</text>
+        <rect x="32" y="72" width="568" height="30" rx="4" fill="var(--panel)" stroke="currentColor" stroke-opacity=".3"/><text x="44" y="92">tool rows · dialogs</text><text x="588" y="92" text-anchor="end" fill-opacity=".6">requestId = tool_use_id</text>
+        <rect x="32" y="110" width="568" height="30" rx="4" fill="var(--panel)" stroke="currentColor" stroke-opacity=".3"/><text x="44" y="130">CommandOutput</text><text x="588" y="130" text-anchor="end" fill-opacity=".6">your slash command's answer, drawn inline</text>
+        <rect x="32" y="148" width="568" height="64" rx="4" fill="var(--panel)" stroke="currentColor" stroke-opacity=".3"/><text x="44" y="168">assistant reply · Markdown · Raster · Image</text><text x="44" y="190" fill-opacity=".6">a grid of cells is one Raster; a picture is one Image (kitty protocol)</text>
+        <text x="44" y="236">spinner</text><text x="588" y="236" text-anchor="end" fill-opacity=".6">requestId = agent id</text>
+        <rect x="32" y="250" width="568" height="30" rx="4" fill="var(--panel)" stroke="var(--before)" stroke-width="2"/><text x="44" y="270" fill="var(--before)" font-weight="600">AbovePrompt band</text><text x="588" y="270" text-anchor="end" fill-opacity=".6">a row of your own above the prompt</text>
+        <rect x="32" y="288" width="568" height="40" rx="4" fill="var(--panel)" stroke="currentColor"/><text x="44" y="313">&gt; prompt box</text><text x="588" y="313" text-anchor="end" fill-opacity=".6">prompt.edit · fill · suggest</text>
+        <text x="44" y="356" fill="var(--during)" font-weight="600">status line</text><text x="160" y="356" fill-opacity=".6">$.ui.status(text)</text>
+        <!-- pane -->
+        <rect x="630" y="16" width="254" height="368" rx="8" fill="var(--panel)" stroke="var(--after)" stroke-width="2"/>
+        <text x="646" y="42" font-weight="600" fill="var(--after)">Pane</text>
+        <text x="646" y="64" fill-opacity=".7">$.ui.open({ id, title })</text>
+        <text x="646" y="86" fill-opacity=".7">drawn by ui.render on</text>
+        <text x="646" y="104" fill-opacity=".7">{ component: 'Pane' }</text>
+        <text x="646" y="134" fill-opacity=".7">docks beside the transcript</text>
+        <text x="646" y="152" fill-opacity=".7">in fullscreen; opened unasked</text>
+        <text x="646" y="170" fill-opacity=".7">only from 144 columns</text>
+        <text x="646" y="200" fill-opacity=".7">focus + closeOnEscape:</text>
+        <text x="646" y="218" fill-opacity=".7">behaves as a dialog</text>
+        <rect x="646" y="300" width="222" height="56" rx="6" fill="var(--ink)"/>
+        <text x="660" y="324" fill="var(--panel)" font-weight="600">toast</text>
+        <text x="660" y="342" fill="var(--panel)" fill-opacity=".75">$.ui.toast(text)</text>
+      </g>
+    </svg>
+    <figcaption>Buttons, inputs and selects keep their handlers inside the plugin and raise <code>ui.press</code>, <code>ui.input</code> and <code>ui.select</code>, which other plugins can also hook. A tree that doesn't validate on a surface isn't drawn; the engine draws its own and logs why. Element tables differ: the terminal alone has <code>Raster</code> and <code>Image</code> but no <code>Svg</code>. The types already declare <code>vscode</code> and <code>mobile</code> tables, ahead of those surfaces drawing. The permission prompt is the one dialog a mod can't redraw.</figcaption>
+  </figure>
+</section>
+
+<!-- 7. COMPARE -->
+<section class="fig" id="compare">
+  <header><span class="num">FIGURE 7</span><h2>Mods next to hooks, skills and MCP</h2>
+  <p>They all extend Claude Code, but they plug into different places. Mods are the only one that runs inside the engine's own call path, which is why they can rewrite results, draw interface and keep session state.</p></header>
+  <figure class="narrow">
+    <svg viewBox="0 0 900 300" role="img" aria-label="Classic hooks are shell processes the engine starts per event and talks to over stdin and stdout. Mods are functions inside the event chain. Skills are prompt text the model reads. MCP servers are separate processes offering tools over a protocol.">
+      <defs><marker id="a7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+      <g font-size="12" fill="currentColor">
+        <rect x="300" y="100" width="300" height="100" rx="10" fill="var(--chip)" stroke="currentColor"/>
+        <text x="450" y="126" text-anchor="middle" font-weight="600">engine event chain</text>
+        <rect x="330" y="140" width="240" height="44" rx="6" fill="var(--panel)" stroke="var(--before)" stroke-width="2"/>
+        <text x="450" y="160" text-anchor="middle" fill="var(--before)" font-weight="600">mods</text>
+        <text x="450" y="176" text-anchor="middle" fill-opacity=".65">in-process functions, ($, e, next)</text>
+        <rect x="20" y="30" width="220" height="64" rx="8" fill="none" stroke="currentColor"/><text x="34" y="54" font-weight="600">classic hooks</text><text x="34" y="74" fill-opacity=".65">a shell command per event</text>
+        <line x1="240" y1="70" x2="330" y2="118" stroke="currentColor" marker-end="url(#a7)"/><text x="262" y="112" fill-opacity=".65">stdin / stdout JSON</text>
+        <rect x="660" y="30" width="220" height="64" rx="8" fill="none" stroke="currentColor"/><text x="674" y="54" font-weight="600">skills</text><text x="674" y="74" fill-opacity=".65">instructions the model reads</text>
+        <line x1="660" y1="70" x2="580" y2="118" stroke="currentColor" marker-end="url(#a7)"/><text x="588" y="96" fill-opacity=".65">prompt text</text>
+        <rect x="660" y="210" width="220" height="64" rx="8" fill="none" stroke="currentColor"/><text x="674" y="234" font-weight="600">MCP servers</text><text x="674" y="254" fill-opacity=".65">tools in another process</text>
+        <line x1="660" y1="240" x2="580" y2="192" stroke="currentColor" marker-end="url(#a7)"/><text x="590" y="232" fill-opacity=".65">protocol calls</text>
+        <rect x="20" y="210" width="220" height="64" rx="8" fill="none" stroke="currentColor"/><text x="34" y="234" font-weight="600">subagents</text><text x="34" y="254" fill-opacity=".65">more loops, same chain</text>
+        <line x1="240" y1="240" x2="330" y2="192" stroke="currentColor" marker-end="url(#a7)"/><text x="250" y="232" fill-opacity=".65">e.agentId</text>
+      </g>
+    </svg>
+    <figcaption>A mod can contain the others. It can register tools (served like MCP tools), declare agent types, rewrite a skill's prompt at <code>skill.prompt</code>, and hook classic events as <code>classic.&lt;Event&gt;</code>. Classic settings hooks still run, beneath the mods and as part of core, except managed ones, which run first.</figcaption>
+  </figure>
+  <div class="tablewrap"><table>
+    <thead><tr><th></th><th>Classic hooks</th><th>Mods</th><th>Skills</th><th>MCP</th></tr></thead>
+    <tbody>
+      <tr><td>Runs as</td><td>a shell process per event</td><td>a function in the engine's chain</td><td>text in the prompt</td><td>a separate server process</td></tr>
+      <tr><td>Can change a tool's result</td><td>adds context</td><td>yes, on the way back up</td><td>no</td><td>its own tools only</td></tr>
+      <tr><td>Can draw interface</td><td>no</td><td>panes, bands, rows, status, toasts</td><td>no</td><td>no</td></tr>
+      <tr><td>Keeps state</td><td>files you manage</td><td><code>$.state</code>, <code>$.store</code></td><td>no</td><td>its own process</td></tr>
+      <tr><td>Language</td><td>anything executable</td><td>TypeScript or JavaScript</td><td>Markdown</td><td>any</td></tr>
+      <tr><td>Fails</td><td>exit codes, timeouts</td><td>skipped hook, chain goes on</td><td>not applicable</td><td>tool error</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 8. CONTROL -->
+<section class="fig" id="control">
+  <header><span class="num">FIGURE 8</span><h2>Who can turn a mod off</h2>
+  <p>Mods are on by default from 2.1.287. These are the switches, from the widest to the narrowest. Built-in mods ignore most of them.</p></header>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Switch</th><th>Who sets it</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td>Remote switch</td><td>Anthropic</td><td>Turns installed mods off in every process; nothing on the machine turns them back on. The log reads <code>hooks modules are turned off in this process</code>.</td></tr>
+      <tr><td><code>disableAllHooks</code></td><td>Any settings file</td><td>In managed settings, no mod or hook from an installed plugin runs. In your own settings, what the organization manages keeps running.</td></tr>
+      <tr><td><code>allowManagedHooksOnly</code></td><td>Managed settings</td><td>Blocks hooks and installed mods that aren't the organization's.</td></tr>
+      <tr><td><code>allowManagedModsOnly</code></td><td>Managed settings, an option on <code>sec-default</code></td><td>Only the organization's mods and built-ins load; users' settings hooks keep running.</td></tr>
+      <tr><td><code>prependPlugins</code>, <code>appendPlugins</code></td><td>Managed settings</td><td>Seat the organization's mods before or after every user mod, in the listed order.</td></tr>
+      <tr><td><code>disableSideloadFlags</code></td><td>Managed settings</td><td>Rejects <code>--plugin-dir</code> and <code>--plugin-url</code> at startup.</td></tr>
+      <tr><td><code>allowModsToOverrideDenyRules</code></td><td>Managed settings, an option on <code>sec-default</code></td><td>Lets a user's mod approve a call a <code>deny</code> rule refuses. Off unless set.</td></tr>
+      <tr><td><code>plugin.register</code> hook</td><td>A policy mod</td><td>Refuses any module before it joins the chain, judged by its tier and the <code>$</code> calls it uses.</td></tr>
+      <tr><td><code>--safe-mode</code></td><td>You, per run</td><td>Starts with no installed plugin loaded at all, mods included.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="callout">Before installing someone else's mod, run <code>claude plugin validate</code> on it. It lists every event the mod hooks and every <code>$</code> call it makes, so a mod that hooks <code>session.append</code> or calls <code>$.http.fetch</code> says so up front.</p>
+</section>
+
+<!-- 8. SAMPLES -->
+<section class="fig" id="samples">
+  <header><span class="num">FIGURE 9</span><h2>Samples, placed on the timeline</h2>
+  <p>Four small mods written for this guide, one per phase. Each validates with <code>claude plugin validate</code>, type-checks against the 2.1.295 declarations, and passes its tests under <code>claude plugin test</code>. They live in <code>~/Projects/claude-mods/samples/ours/</code>.</p></header>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Phase</th><th>Mod</th><th>Hooks</th><th>What it shows</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill before">BEFORE</span></td><td><code>house-rules</code></td><td><code>prompt.compose</code>, <code>prompt.submit</code>, <code>session.start</code>, <code>command.run</code></td><td>Appends a system-prompt section after the cache boundary, attaches the submit time as context you never see, and registers <code>/house-rules</code>.</td></tr>
+      <tr><td><span class="pill during">DURING</span></td><td><code>blast-guard</code></td><td><code>tool.call</code> (Bash), <code>agent.spawn</code></td><td>Denies <code>rm -rf</code>, force pushes and hard resets with a toast, trims other commands, flags failures in the status line, and pins Explore subagents to Haiku.</td></tr>
+      <tr><td><span class="pill after">AFTER</span></td><td><code>turn-receipt</code></td><td><code>turn.start</code>, <code>tool.call</code>, <code>turn.complete</code></td><td>Prints "receipt: 42s, 3 tool calls, 812 output tokens" beneath each answered turn, leaving interrupted turns alone.</td></tr>
+      <tr><td><span class="pill durable">DURABLE</span></td><td><code>ledger</code></td><td><code>session.start</code>, <code>tool.call</code>, <code>turn.complete</code>, <code>ui.render</code> (AbovePrompt)</td><td>Counts turns and tools for this session in <code>$.state</code> and for all time in <code>$.store</code>, shows both in a band above the prompt, and reloads after <code>/clear</code> through <code>classic.SessionStart</code>.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="callout"><b>blast-guard is a teaching sample, not a safety control.</b> Like any mod guard it fails open: if the hook throws or overruns its budget, the command runs. Pattern deny-lists are also easy to get around. A guard you rely on belongs in managed settings or the prepend tier, with a <code>.catch</code> handler.</p>
+  <h3>Official and community mods worth reading</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Phase</th><th>Mod</th><th>Size</th><th>The lines to read</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill during">DURING</span></td><td><a href="https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods">blast-radius</a> (playground)</td><td>528 lines</td><td>Holds a Bash <code>tool.call</code>, opens a pane with Proceed and Cancel, polls <code>next.signal.aborted</code> while it waits, then returns <code>next(e)</code> or a <code>{ deny }</code> Claude can act on.</td></tr>
+      <tr><td><span class="pill during">DURING</span></td><td><a href="https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods">replay-theater</a> (playground)</td><td>249 lines</td><td>Records each edit and still returns <code>next(e)</code>: watching without blocking, replayed later by <code>/replay</code>.</td></tr>
+      <tr><td><span class="pill after">AFTER</span></td><td><a href="https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods">token-weather</a> (playground)</td><td>122 lines</td><td><code>const result = await next(e)</code>, skips subagents (<code>e.agentId</code>), takes a reading, then <code>$.ui.invalidate</code>.</td></tr>
+      <tr><td><span class="pill before">BEFORE</span></td><td><a href="https://github.com/karanb192/claude-code-mods">fable-pin</a> (community)</td><td>36 lines</td><td>The smallest rewrite: <code>agent.spawn</code> returns <code>next({ ...e, model })</code>; the on/off switch lives in <code>$.store</code>.</td></tr>
+      <tr><td><span class="pill load">LOAD</span></td><td><a href="https://github.com/anthropics/claude-code/tree/main/mods/sec-default">sec-default</a> (built in)</td><td>668 lines</td><td>The guard that runs first: how a policy mod judges other modules at <code>plugin.register</code>.</td></tr>
+      <tr><td><span class="pill durable">DURABLE</span></td><td><a href="https://github.com/anthropics/claude-code/tree/main/mods">diff</a> (built in)</td><td>8,247 lines</td><td>Claude Code's own <code>/diff</code>, written as a mod: <code>try { await next(e) } finally { … }</code> around tools, and pane and per-repository preferences saved to the store.</td></tr>
+    </tbody>
+  </table></div>
+  <p>The community catalog <a href="https://github.com/karanb192/awesome-claude-code-mods">awesome-claude-code-mods</a> hand-picks about 100 mods in eight categories, with what each can read, write, run or send, from a scan of 2,692 mods validated on 2.1.291 (browse it at <a href="https://mods.aidojo.si/">mods.aidojo.si</a>). <a href="https://github.com/Singh-AP/awesome-claude-mods">awesome-claude-mods</a> offers 44 mods that install with one command, each pinned to a reviewed commit; the testing is its own claim, and it was four days old at the time of writing. No official sample yet uses <code>$.model</code>, <code>$.agent</code>, <code>$.audio</code> or <code>$.tool</code>; the type declarations are the only guide to those.</p>
+</section>
+
+<footer>
+  <p>Source of truth: the 2.1.295 type declarations (<code>claude-code.d.ts</code>, about 21,500 lines) and the plugin-authoring reference bundled with Claude Code, both copied into <code>research/bundled-2.1.295/</code> (the 2.1.287 copy sits beside it). The API is early access and changes between releases. Regenerate the types after an update rather than trusting these figures.</p>
+  <p class="src">Docs: <a href="https://code.claude.com/docs/en/plugins/mods/overview">Mods overview</a> · <a href="https://code.claude.com/docs/en/plugins/mods/reference">Mods reference</a> · <a href="https://code.claude.com/docs/en/plugins/mods/create">Create a mod</a> · <a href="https://code.claude.com/docs/en/plugins/mods/interface">Draw in the interface</a> · <a href="https://code.claude.com/docs/en/plugins/mods/admin">Manage mods for your organization</a> · <a href="https://claude.com/blog/claude-code-mods">Launch post</a> · <a href="https://claude.dev/blog/getting-started-with-claude-code-mods/">Getting started</a> · <a href="https://github.com/anthropics/claude-code-playground">Playground samples</a>. Local copies of every page are in <code>research/docs/</code>.</p>
+  <p>Where the docs and the launch-week write-ups disagree, this page follows the docs and the declarations. The getting-started post calls the module environment "a sandbox of its own", while the docs say plainly that mods aren't sandboxed. The community mod-builder skill still says mods need <code>CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1</code>, which predates 2.1.287.</p>
+</footer>
+</div>

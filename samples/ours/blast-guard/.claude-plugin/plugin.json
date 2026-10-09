@@ -1,0 +1,8 @@
+{
+  "name": "blast-guard",
+  "version": "0.1.0",
+  "description": "DURING the turn: refuses destructive shell commands, tidies the rest, and pins Explore subagents to Haiku",
+  "author": {
+    "name": "Rob Gruhl"
+  }
+}

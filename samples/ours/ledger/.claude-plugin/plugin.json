@@ -1,0 +1,9 @@
+{
+  "name": "ledger",
+  "version": "0.1.0",
+  "description": "DURABLE: counts turns and tool calls per session ($.state) and for all time ($.store), shown in a band above the prompt",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Rob Gruhl"
+  }
+}

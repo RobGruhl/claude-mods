@@ -1,0 +1,6 @@
+{
+  "name": "tool-counter",
+  "version": "0.1.0",
+  "description": "Counts Claude's tool calls and shows the count in the status line",
+  "author": { "name": "Rob Gruhl" }
+}

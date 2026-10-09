@@ -1,0 +1,12 @@
+.DS_Store
+
+# Anthropic's copyrighted material, kept locally for reference only
+# (anthropics/claude-code is "All rights reserved"; the docs and blog posts are Anthropic's pages).
+research/docs/
+research/bundled-*/
+
+# Other people's repositories, cloned locally for study
+samples/upstream/
+
+# Typings Claude Code writes beside a mod each time it loads one
+**/.claude-plugin/types/
